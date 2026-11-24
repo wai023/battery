@@ -2,6 +2,8 @@
 
 浮屿（Fuyu）插件。在岛上显示电池电量与充电状态，胶囊随电量填充，支持液体波浪和光点粒子两种动画。
 
+![三种填充样式](docs/preview.png)
+
 ## 功能
 
 - **三种填充样式**：简单填充、液体波浪、光点和粒子
@@ -55,3 +57,5 @@ npm run lint
 npm test
 npm run package
 ```
+
+`docs/preview.png` 与 `build/preview.html` 用同一套几何（`src/gauge.ts`）生成，改了配色或形状记得一起更新。
