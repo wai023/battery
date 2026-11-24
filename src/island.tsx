@@ -41,7 +41,9 @@ function statusOf(state: BatteryState): string {
     return text.readFailed;
   }
   if (state.full) return text.full;
-  return state.charging ? text.charging : text.discharging;
+  // 接了电就绝不说「使用中」：真在放电的「使用中」只留给拔掉电源之后。
+  if (state.ac) return state.charging ? text.charging : text.plugged;
+  return text.discharging;
 }
 
 function leftOf(state: BatteryState): string {
@@ -282,7 +284,13 @@ export default function apply(ctx: Context) {
               <span>{text.labelPower}</span>
               <span>{text.watt(state.watts)}</span>
             </>
-          ) : null}
+          ) : (
+            // 插拔后 1.5 秒内功率是空的；这一行要占住位置，否则下面整块会上下跳。
+            <>
+              <span>{text.labelPower}</span>
+              <span>—</span>
+            </>
+          )}
           <span>{text.labelBattery}</span>
           <span>{state.name || "—"}</span>
         </div>

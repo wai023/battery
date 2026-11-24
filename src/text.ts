@@ -1,6 +1,7 @@
 const en = {
   title: "Battery",
   charging: "Charging",
+  plugged: "Plugged in",
   discharging: "On battery",
   full: "Fully charged",
   noBattery: "No battery detected",
@@ -28,6 +29,7 @@ const en = {
 const zhCN: typeof en = {
   title: "电量",
   charging: "充电中",
+  plugged: "已接电源",
   discharging: "使用中",
   full: "已充满",
   noBattery: "未检测到电池",
@@ -35,7 +37,7 @@ const zhCN: typeof en = {
   wmiFailed: "电池查询失败",
   refresh: "刷新",
   settings: "设置",
-  hint: "电量每 30 秒从 Windows 读取一次。高于 40% 显示绿色，21–40% 黄色，20% 及以下红色。",
+  hint: "电量每 30 秒从 Windows 读取一次。高于 40% 显示绿色，21–40% 黄色，20% 及以下红色。接电但电池没进电（保护阈值或已满）时显示「已接电源」。",
   span: (minutes: number) => {
     if (minutes < 60) return `${minutes} 分钟`;
     const h = Math.floor(minutes / 60);
