@@ -42,12 +42,12 @@
     "showRing": {
       "type": "boolean",
       "title": {
-        "zh-CN": "显示电量圆环",
-        "en": "Show level ring"
+        "zh-CN": "显示外圈描边",
+        "en": "Show rim outline"
       },
       "description": {
-        "zh-CN": "沿胶囊边缘画一圈进度，颜色与填充一致",
-        "en": "Draw progress along the capsule edge in the same colour as the fill"
+        "zh-CN": "沿胶囊边缘加一圈同色描边，勾出液体轮廓。电量由液面长度表达，不再另外画进度环",
+        "en": "Draw a rim around the capsule in the fill colour. The fill length already shows the level"
       },
       "default": false
     },

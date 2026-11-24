@@ -1,25 +1,24 @@
 // 生成 build/preview.html：用 src/gauge.ts 里真实的几何函数渲染六种组合，
 // 不依赖浮屿运行时，用于在浏览器里核对形状与动画。
 import { mkdirSync, writeFileSync } from "node:fs";
-import { bubbles, capsulePath, capsulePerimeter, levelOf, sparkles, starPath, wavePath } from "../src/gauge.ts";
+import { bubbles, capsulePath, fillXOf, sparkles, starPath, wavePathH } from "../src/gauge.ts";
 
 const W = 320;
 const H = 84;
 
 function gauge({ percent, color, style, showRing = false, animate = true }) {
-  const inset = showRing ? 3.4 : 1;
-  const level = levelOf(percent, inset, H - inset * 2);
+  const inset = showRing ? 1.6 : 1;
+  const fillX = fillXOf(percent, inset, W - inset * 2);
   const period = Math.max(32, Math.round(H * 1.6));
   const amp = Math.max(1.4, Math.min(5, H * 0.06));
   const fontSize = Math.max(11, Math.min(34, Math.round(H * 0.46)));
-  const ringPerim = capsulePerimeter(W, H, 1.6);
   const uid = Math.random().toString(36).slice(2, 8);
-  const vars = `--battery-wave-period:${period}px;--battery-rise:${Math.max(12, H * 0.55)}px`;
+  const vars = `--battery-sway:2px;--battery-flow:44px`;
 
   const liquid =
     style === "simple"
-      ? `<rect x="0" y="${level}" width="${W}" height="${Math.max(0, H - level)}" fill="${color}"/>`
-      : `<path d="${wavePath(W, H, level, period, amp)}" fill="${color}"/>`;
+      ? `<rect x="0" y="0" width="${Math.max(0, fillX)}" height="${H}" fill="${color}"/>`
+      : `<path d="${wavePathH(H, fillX, period, amp)}" fill="${color}"/>`;
 
   const body = style === "simple" || !animate ? liquid : `<g class="wave">${liquid}</g>`;
 
@@ -49,21 +48,21 @@ function gauge({ percent, color, style, showRing = false, animate = true }) {
       : "";
 
   const ring = showRing
-    ? `<path d="${capsulePath(W, H, 1.6)}" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2.2"/>
-       <path d="${capsulePath(W, H, 1.6)}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round"
-         stroke-dasharray="${ringPerim.toFixed(2)}" stroke-dashoffset="${(ringPerim * (1 - percent / 100)).toFixed(2)}"/>`
+    ? `<path d="${capsulePath(W, H, 1.6)}" fill="none" stroke="${color}" stroke-width="1.2" opacity="0.4"/>`
     : "";
 
   return `<svg class="gauge" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="${vars}">
   <defs>
     <clipPath id="cap${uid}"><path d="${capsulePath(W, H, inset)}"/></clipPath>
-    <clipPath id="liq${uid}"><rect x="0" y="${level}" width="${W}" height="${Math.max(0, H - level)}"/></clipPath>
+    <clipPath id="liq${uid}"><rect x="0" y="0" width="${Math.max(0, fillX)}" height="${H}"/></clipPath>
   </defs>
   <path d="${capsulePath(W, H, inset)}" fill="#1b2029" stroke="rgba(255,255,255,.14)" stroke-width="0.8"/>
   <g clip-path="url(#cap${uid})">${body}${particles}</g>
   ${ring}
   <text x="${W / 2}" y="${H / 2}" text-anchor="middle" dominant-baseline="central" font-size="${fontSize}"
     font-weight="500" fill="#eaf2fb">${percent}%</text>
+  <g clip-path="url(#liq${uid})"><text x="${W / 2}" y="${H / 2}" text-anchor="middle" dominant-baseline="central"
+    font-size="${fontSize}" font-weight="500" fill="#06222f">${percent}%</text></g>
 </svg>`;
 }
 
@@ -92,14 +91,15 @@ const html = `<!doctype html>
   .card { padding: 14px; border-radius: 12px; background: #11151c; border: 1px solid #262d38; }
   .card h2 { margin: 0 0 10px; font-size: 12px; font-weight: 400; color: #93a0b4; }
   .gauge { display: block; }
-  @keyframes wave-shift { from { transform: translateX(0); } to { transform: translateX(calc(var(--battery-wave-period) * -1)); } }
-  .wave { animation: wave-shift 3.6s linear infinite; }
-  @keyframes bubble-rise {
-    0% { transform: translateY(0); opacity: 0; }
-    20% { opacity: .75; }
-    100% { transform: translateY(calc(var(--battery-rise) * -1)); opacity: 0; }
+  @keyframes wave-sway { from { transform: translateX(calc(var(--battery-sway) * -1)); } to { transform: translateX(var(--battery-sway)); } }
+  .wave { animation: wave-sway 4.8s ease-in-out infinite alternate; }
+  @keyframes bubble-flow {
+    0% { transform: translateX(0); opacity: 0; }
+    18% { opacity: .6; }
+    72% { opacity: .5; }
+    100% { transform: translateX(var(--battery-flow)); opacity: 0; }
   }
-  .bubble { animation: bubble-rise 3s ease-in-out infinite; }
+  .bubble { animation: bubble-flow 3s ease-in-out infinite; }
   @keyframes sparkle-pulse {
     0%, 100% { opacity: .12; transform: scale(.6); }
     50% { opacity: .9; transform: scale(1); }

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { bubbles, capsulePath, capsulePerimeter, levelOf, sparkles, starPath, wavePath } from "../src/gauge.ts";
+import { bubbles, capsulePath, capsulePerimeter, fillXOf, levelOf, sparkles, starPath, wavePath, wavePathH } from "../src/gauge.ts";
 import { parseBattery } from "../src/parse.ts";
 import { DEFAULT_CONFIG, TONES, evaluateAlerts, isPlugged, normalizeConfig, toneOf } from "../src/types.ts";
 
@@ -19,6 +19,25 @@ test("capsulePerimeter matches straight edges plus two half circles", () => {
   assert.ok(Math.abs(capsulePerimeter(w, h) - expected) < 0.001);
 });
 
+test("fillXOf maps percent to an x coordinate", () => {
+  assert.equal(fillXOf(0, 1, 60), 1);
+  assert.equal(fillXOf(100, 1, 60), 61);
+  assert.equal(fillXOf(50, 1, 60), 31);
+  assert.equal(fillXOf(140, 1, 60), 61);
+  assert.equal(fillXOf(-20, 1, 60), 1);
+});
+
+test("wavePathH stays smooth, closed and fills to the left of the edge", () => {
+  const d = wavePathH(80, 40, 90, 4);
+  assert.ok(d.startsWith("M 40 -90"));
+  assert.ok(d.includes(" Q "));
+  assert.ok(d.includes(" T "));
+  assert.ok(d.endsWith("Z"));
+  // 实心区在液面左侧，闭合边落在画布外的 -90
+  assert.ok(d.includes(" L -90 180 L -90 -90 Z"));
+  assert.ok(!d.includes("NaN"));
+});
+
 test("levelOf maps percent to a y coordinate", () => {
   assert.equal(levelOf(0, 1, 60), 61);
   assert.equal(levelOf(100, 1, 60), 1);
@@ -27,14 +46,16 @@ test("levelOf maps percent to a y coordinate", () => {
   assert.equal(levelOf(-20, 1, 60), 61);
 });
 
-test("wavePath stays smooth, closed and inside the canvas", () => {
+test("wavePath stays smooth, closed and fills below the waterline", () => {
   const d = wavePath(200, 80, 40, 90, 4);
-  assert.ok(d.startsWith("M -90 40"));
+  // 起点比 -period 再多 4px：动画平移一个周期后左边缘仍在画布外，不会露出竖缝
+  assert.ok(d.startsWith("M -94 40"));
   assert.ok(d.includes(" Q "));
   assert.ok(d.includes(" T "));
   assert.ok(d.endsWith("Z"));
-  // 底部闭合到下边界 80，左边界多画一个周期 -90
-  assert.ok(d.includes(" L 315 80 L -90 80 Z"));
+  // 实心区在液面下方，闭合边落到下边界 80
+  assert.ok(d.includes(" L -94 80 Z"));
+  assert.ok(!d.includes("NaN"));
 });
 
 test("bubbles and sparkles are deterministic and inside bounds", () => {

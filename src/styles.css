@@ -126,35 +126,77 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 横条填充下液面是纵波，左右轻晃 ±2：再大就会被读成电量在跳。 */
+@keyframes battery-wave-sway {
+  from {
+    transform: translateX(calc(var(--battery-sway, 2px) * -1));
+  }
+  to {
+    transform: translateX(var(--battery-sway, 2px));
+  }
+}
+
+.battery-wave {
+  animation: battery-wave-sway var(--battery-wave-dur, 4.8s) ease-in-out infinite alternate;
+}
+
+/* 挂件位沿用原来的「水位」：水面是横的，靠平移一个周期表现流动。 */
 @keyframes battery-wave-shift {
   from {
     transform: translateX(0);
   }
   to {
-    transform: translateX(calc(var(--battery-wave-period, 80px) * -1));
+    transform: translateX(var(--battery-wave-period, 80px));
   }
 }
 
-.battery-wave {
+.battery-wave--v {
   animation: battery-wave-shift var(--battery-wave-dur, 3.6s) linear infinite;
 }
 
-@keyframes battery-bubble-rise {
+/* 粒子改横向漂移：原来上下浮动会让人读成「在冒泡」，不是「在流动」。 */
+@keyframes battery-bubble-flow {
   0% {
-    transform: translateY(0);
+    transform: translateX(0);
     opacity: 0;
   }
-  20% {
-    opacity: 0.75;
+  18% {
+    opacity: 0.6;
+  }
+  72% {
+    opacity: 0.5;
   }
   100% {
-    transform: translateY(calc(var(--battery-rise, 40px) * -1));
+    transform: translateX(var(--battery-flow, 56px));
     opacity: 0;
   }
 }
 
 .battery-bubble {
-  animation: battery-bubble-rise var(--battery-bubble-dur, 3s) ease-in-out infinite;
+  animation: battery-bubble-flow var(--battery-bubble-dur, 3s) ease-in-out infinite;
+}
+
+/* 充电时每 3.6 秒一道光带从左扫到右，静止时也看得出「在进电」。 */
+@keyframes battery-sheen {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.14;
+  }
+  30% {
+    transform: translateX(var(--battery-sheen-travel, 320px));
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(var(--battery-sheen-travel, 320px));
+    opacity: 0;
+  }
+}
+
+.battery-sheen {
+  animation: battery-sheen 3.6s ease-in-out infinite;
 }
 
 @keyframes battery-sparkle-pulse {
@@ -177,14 +219,16 @@
 
 .battery-still .battery-wave,
 .battery-still .battery-bubble,
-.battery-still .battery-sparkle {
+.battery-still .battery-sparkle,
+.battery-still .battery-sheen {
   animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .battery-wave,
   .battery-bubble,
-  .battery-sparkle {
+  .battery-sparkle,
+  .battery-sheen {
     animation: none;
   }
 }

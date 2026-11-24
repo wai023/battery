@@ -1,6 +1,6 @@
 import type { Context } from "fuyu-plugin";
 import { useEffect, useId, useState, type CSSProperties } from "react";
-import { bubbles, capsulePath, capsulePerimeter, levelOf, sparkles, starPath, wavePath } from "./gauge.ts";
+import { bubbles, capsulePath, fillXOf, levelOf, sparkles, starPath, wavePath, wavePathH } from "./gauge.ts";
 import { text } from "./text.ts";
 import {
   DEFAULT_CONFIG,
@@ -61,28 +61,47 @@ type GaugeProps = {
   style: FillStyle;
   showRing: boolean;
   animate: boolean;
+  charging: boolean;
+  /** h：液面竖直、从左往右推进（展开页）；v：液面水平、由下往上涨（挂件位，沿用原样式）。 */
+  orientation?: "h" | "v";
 };
 
 // 三种样式共用一套几何：simple 只填色，wave 加正弦液面，sparkle 再叠光点。
-function Gauge({ w, h, percent, ok, color, style, showRing, animate }: GaugeProps) {
+function Gauge({ w, h, percent, ok, color, style, showRing, animate, charging, orientation = "h" }: GaugeProps) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
-  const inset = showRing ? 3.4 : 1;
-  const level = levelOf(percent, inset, Math.max(1, h - inset * 2));
-  const period = Math.max(32, Math.round(h * 1.6));
-  const amp = Math.max(1.4, Math.min(5, h * 0.06));
+  const inset = showRing ? 1.6 : 1;
+  const vertical = orientation === "v";
+  const fillX = vertical ? 0 : fillXOf(percent, inset, Math.max(1, w - inset * 2));
+  const level = vertical ? levelOf(percent, inset, Math.max(1, h - inset * 2)) : 0;
+  // 波浪周期取推进方向的垂直边：横条沿高度振荡，水位沿宽度振荡。
+  // 水位在方形卡片里如果沿用 h*1.6，一个画面只装得下半个波，看着像一条斜直线，所以按宽度收。
+  const period = vertical ? Math.max(32, Math.round(w / 2)) : Math.max(32, Math.round(h * 1.6));
+  const amp = vertical ? Math.max(1.4, Math.min(7, h * 0.04)) : Math.max(1.4, Math.min(5, h * 0.06));
   const fontSize = Math.max(11, Math.min(34, Math.round(h * 0.46)));
-  const ringPerim = capsulePerimeter(w, h, 1.6);
+  const label = ok ? `${percent}%` : "--";
   const vars = {
+    // 液面左右轻晃 ±2：幅度小到只像水面在颤，不会被读成电量在跳。
+    "--battery-sway": `${Math.max(1.5, Math.min(3, w * 0.008)).toFixed(1)}px`,
+    // 水位模式靠平移「一个周期」表现流动：波形路径左右各多画一个周期，
+    // 平移量超过一个周期，路径左边缘就会滑进画面，左侧露出底色（一条竖缝）。
     "--battery-wave-period": `${period}px`,
-    "--battery-rise": `${Math.max(12, h * 0.55)}px`,
+    // 粒子横向漂移的距离：跟着宽度走，窄条上不会一步跨出边界。
+    "--battery-flow": `${Math.round(Math.max(36, w * 0.14))}px`,
+    // 光带从左侧画外扫到右侧画外，行程按画布宽度算。
+    "--battery-sheen-travel": `${Math.round(w * 1.3)}px`,
   } as Record<string, string>;
 
-  const liquid =
-    style === "simple" ? (
-      <rect x={0} y={level} width={w} height={Math.max(0, h - level)} fill={color} />
-    ) : (
-      <path d={wavePath(w, h, level, period, amp)} fill={color} />
-    );
+  const liquid = vertical
+    ? style === "simple"
+      ? <rect x={0} y={level} width={w} height={Math.max(0, h - level)} fill={color} />
+      : <path d={wavePath(w, h, level, period, amp)} fill={color} />
+    : style === "simple"
+      ? <rect x={0} y={0} width={Math.max(0, fillX)} height={h} fill={color} />
+      : <path d={wavePathH(h, fillX, period, amp)} fill={color} />
+
+  const liquidClip = vertical
+    ? <rect x={0} y={level} width={w} height={Math.max(0, h - level)} />
+    : <rect x={0} y={0} width={Math.max(0, fillX)} height={h} />;
 
   return (
     <svg
@@ -99,16 +118,14 @@ function Gauge({ w, h, percent, ok, color, style, showRing, animate }: GaugeProp
         <clipPath id={`bcap${uid}`}>
           <path d={capsulePath(w, h, inset)} />
         </clipPath>
-        <clipPath id={`bliq${uid}`}>
-          <rect x={0} y={level} width={w} height={Math.max(0, h - level)} />
-        </clipPath>
+        <clipPath id={`bliq${uid}`}>{liquidClip}</clipPath>
       </defs>
       <path d={capsulePath(w, h, inset)} fill="var(--fuyu-plugin-surface)" stroke="var(--fuyu-plugin-border)" strokeWidth={0.8} />
       <g clipPath={`url(#bcap${uid})`}>
         {style === "simple" || !animate ? (
           liquid
         ) : (
-          <g className="battery-wave">{liquid}</g>
+          <g className={vertical ? "battery-wave battery-wave--v" : "battery-wave"}>{liquid}</g>
         )}
         {animate && style !== "simple" && (
           <g clipPath={`url(#bliq${uid})`}>
@@ -137,19 +154,31 @@ function Gauge({ w, h, percent, ok, color, style, showRing, animate }: GaugeProp
               ))}
           </g>
         )}
+        {/* 只在充电时扫光：液面以下的裁剪避免 100% 时压着胶囊顶边闪。 */}
+        {animate && charging && (
+          <g clipPath={`url(#bliq${uid})`}>
+            <rect
+              className="battery-sheen"
+              x={-w * 0.28}
+              y={0}
+              width={Math.max(24, w * 0.22)}
+              height={h}
+              rx={h / 2}
+              fill="#ffffff"
+              opacity={0}
+            />
+          </g>
+        )}
       </g>
-      {showRing && (
-        <path d={capsulePath(w, h, 1.6)} fill="none" stroke="var(--fuyu-plugin-border)" strokeWidth={2.2} />
-      )}
+      {/* 外描边：横向填充下圆环进度会和填充长度打架（15% 时刻度在右上角、液体在左边），
+          所以这里只勾一圈同色边，进度交给液面表达。 */}
       {showRing && (
         <path
           d={capsulePath(w, h, 1.6)}
           fill="none"
           stroke={color}
-          strokeWidth={2.2}
-          strokeLinecap="round"
-          strokeDasharray={ringPerim}
-          strokeDashoffset={ringPerim * (1 - percent / 100)}
+          strokeWidth={1.2}
+          opacity={0.4}
         />
       )}
       <text
@@ -161,8 +190,22 @@ function Gauge({ w, h, percent, ok, color, style, showRing, animate }: GaugeProp
         fontWeight={500}
         fill="var(--fuyu-plugin-text)"
       >
-        {ok ? `${percent}%` : "--"}
+        {label}
       </text>
+      {/* 液面盖住的半个字换深色：横条填到一半时，单色字必然有一半糊在底色里。 */}
+      <g clipPath={`url(#bliq${uid})`} aria-hidden="true">
+        <text
+          x={w / 2}
+          y={h / 2}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={fontSize}
+          fontWeight={500}
+          fill="#06222f"
+        >
+          {label}
+        </text>
+      </g>
     </svg>
   );
 }
@@ -226,6 +269,7 @@ export default function apply(ctx: Context) {
             style={config.style}
             showRing={config.showRing}
             animate={config.animate}
+            charging={state.charging}
           />
         </div>
         <div className="battery__meta">
@@ -277,6 +321,8 @@ export default function apply(ctx: Context) {
             style={config.style}
             showRing={config.showRing}
             animate={config.animate}
+            charging={state.charging}
+            orientation="v"
           />
         </div>
         {!compact && (

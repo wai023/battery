@@ -7,7 +7,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { bubbles, capsulePath, capsulePerimeter, levelOf, sparkles, starPath, wavePath } from "../src/gauge.ts";
+import { bubbles, capsulePath, fillXOf, sparkles, starPath, wavePathH } from "../src/gauge.ts";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -29,17 +29,16 @@ function gauge({ percent, color, style, showRing = false }) {
   const id = `g${uid++}`;
   const w = GAUGE_W;
   const h = GAUGE_H;
-  const inset = showRing ? 3.4 : 1;
-  const level = levelOf(percent, inset, h - inset * 2);
+  const inset = showRing ? 1.6 : 1;
+  const fillX = fillXOf(percent, inset, w - inset * 2);
   const period = Math.max(32, Math.round(h * 1.6));
   const amp = Math.max(1.4, Math.min(5, h * 0.06));
   const fontSize = Math.max(11, Math.min(34, Math.round(h * 0.46)));
-  const ringPerim = capsulePerimeter(w, h, 1.6);
 
   const fill =
     style === "simple"
-      ? `<rect x="0" y="${level.toFixed(2)}" width="${w}" height="${Math.max(0, h - level).toFixed(2)}" fill="${color}"/>`
-      : `<path d="${wavePath(w, h, level, period, amp)}" fill="${color}"/>`;
+      ? `<rect x="0" y="0" width="${Math.max(0, fillX).toFixed(2)}" height="${h}" fill="${color}"/>`
+      : `<path d="${wavePathH(h, fillX, period, amp)}" fill="${color}"/>`;
 
   const particles =
     style === "simple"
@@ -58,21 +57,21 @@ function gauge({ percent, color, style, showRing = false }) {
         }</g>`;
 
   const ring = showRing
-    ? `<path d="${capsulePath(w, h, 1.6)}" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2.2"/>
-       <path d="${capsulePath(w, h, 1.6)}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round"
-         stroke-dasharray="${ringPerim.toFixed(2)}" stroke-dashoffset="${(ringPerim * (1 - percent / 100)).toFixed(2)}"/>`
+    ? `<path d="${capsulePath(w, h, 1.6)}" fill="none" stroke="${color}" stroke-width="1.2" opacity="0.4"/>`
     : "";
 
   return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" overflow="visible">
   <defs>
     <clipPath id="cap${id}"><path d="${capsulePath(w, h, inset)}"/></clipPath>
-    <clipPath id="liq${id}"><rect x="0" y="${level.toFixed(2)}" width="${w}" height="${Math.max(0, h - level).toFixed(2)}"/></clipPath>
+    <clipPath id="liq${id}"><rect x="0" y="0" width="${Math.max(0, fillX).toFixed(2)}" height="${h}"/></clipPath>
   </defs>
   <path d="${capsulePath(w, h, inset)}" fill="#1b2029" stroke="rgba(255,255,255,.14)" stroke-width="0.8"/>
   <g clip-path="url(#cap${id})">${fill}${particles}</g>
   ${ring}
   <text x="${w / 2}" y="${(h / 2 + fontSize * 0.35).toFixed(1)}" text-anchor="middle" font-size="${fontSize}"
     font-weight="500" fill="#eaf2fb">${percent}%</text>
+  <g clip-path="url(#liq${id})"><text x="${w / 2}" y="${(h / 2 + fontSize * 0.35).toFixed(1)}" text-anchor="middle"
+    font-size="${fontSize}" font-weight="500" fill="#06222f">${percent}%</text></g>
 </svg>`;
 }
 

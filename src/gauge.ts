@@ -34,17 +34,24 @@ export function capsulePerimeter(w: number, h: number, inset = 0): number {
   return 2 * (iw - 2 * r) + 2 * Math.PI * r;
 }
 
-// percent=0 液面贴底，100 贴顶；top 是容器内边距后的顶边。
+// percent=0 液面贴左，100 贴右；left 是内边距后的左边界，width 是可填充宽度。
+export function fillXOf(percent: number, left: number, width: number): number {
+  const p = Math.min(100, Math.max(0, percent));
+  return left + width * (p / 100);
+}
+
+// percent=0 液面贴底，100 贴顶；top 是内边距后的顶边。挂件位沿用这套「水位」。
 export function levelOf(percent: number, top: number, height: number): number {
   const p = Math.min(100, Math.max(0, percent));
   return top + height * (1 - p / 100);
 }
 
-// 液面波形：先一段二次贝塞尔，再用 T 连续反射控制点，得到平滑正弦。
-// 路径左右各多画一个周期，横向平移一个周期即可无缝循环。
+// 横向液面：从下往上填充时，液面是一条横波，实心区在液面下方。
+// 先一段二次贝塞尔，再用 T 连续反射控制点，得到平滑正弦；左右各多画一个周期（左侧再留 4px），
+// 循环平移一个周期时边缘始终在画布外，不会露出底色。
 export function wavePath(w: number, h: number, level: number, period: number, amp: number): string {
   const seg = period / 2;
-  const start = -period;
+  const start = -period - 4;
   const end = w + period;
   let d = `M ${start} ${level}`;
   d += ` Q ${start + seg / 2} ${level - amp} ${start + seg} ${level}`;
@@ -54,6 +61,23 @@ export function wavePath(w: number, h: number, level: number, period: number, am
     d += ` T ${x} ${level}`;
   }
   d += ` L ${x} ${h} L ${start} ${h} Z`;
+  return d;
+}
+
+// 竖向液面：从左往右填充时，液面是一条纵波，实心区在液面左侧。
+// 先一段二次贝塞尔，再用 T 连续反射控制点，得到平滑正弦；上下各多画一个周期，平移时不会露底。
+export function wavePathH(h: number, x: number, period: number, amp: number): string {
+  const seg = period / 2;
+  const start = -period;
+  const end = h + period;
+  let d = `M ${x} ${start}`;
+  d += ` Q ${x - amp * 2} ${start + seg / 2} ${x} ${start + seg}`;
+  let y = start + seg;
+  while (y < end) {
+    y += seg;
+    d += ` T ${x} ${y}`;
+  }
+  d += ` L ${start} ${y} L ${start} ${start} Z`;
   return d;
 }
 
