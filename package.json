@@ -1,6 +1,6 @@
 {
   "name": "@wai023/battery",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Show battery level and charging state on the island, with liquid wave and sparkle styles",
   "license": "MIT",
@@ -51,11 +51,10 @@
     "inject": {
       "required": [
         "clients",
-        "commands"
+        "commands",
+        "messages/v1"
       ],
-      "optional": [
-        "plugin-config/v1"
-      ]
+      "optional": []
     },
     "slots": [
       "island.page/v1",

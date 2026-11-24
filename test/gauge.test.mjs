@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { bubbles, capsulePath, capsulePerimeter, levelOf, sparkles, starPath, wavePath } from "../src/gauge.ts";
 import { parseBattery } from "../src/parse.ts";
-import { DEFAULT_CONFIG, TONES, isPlugged, normalizeConfig, toneOf } from "../src/types.ts";
+import { DEFAULT_CONFIG, TONES, evaluateAlerts, isPlugged, normalizeConfig, toneOf } from "../src/types.ts";
 
 test("capsulePath keeps the stroke inside the box", () => {
   const d = capsulePath(100, 40, 2);
@@ -129,6 +129,9 @@ test("normalizeConfig fills defaults and rejects bad values", () => {
     customColor: "#3da9ff",
     showRing: true,
     animate: true,
+    alertLow: true,
+    lowAt: "20",
+    alertFull: true,
   });
   assert.deepEqual(normalizeConfig({ style: "nope", chargeColor: "nope", animate: false }), {
     style: "wave",
@@ -136,5 +139,73 @@ test("normalizeConfig fills defaults and rejects bad values", () => {
     customColor: "#3da9ff",
     showRing: false,
     animate: false,
+    alertLow: true,
+    lowAt: "20",
+    alertFull: true,
   });
+  // 阈值只认四档，别的一律退回 20；提醒开关显式 false 才关。
+  assert.equal(normalizeConfig({ lowAt: "25" }).lowAt, "20");
+  assert.equal(normalizeConfig({ lowAt: "30" }).lowAt, "30");
+  assert.equal(normalizeConfig({ alertLow: false }).alertLow, false);
+});
+
+test("evaluateAlerts fires once per crossing and resets with hysteresis", () => {
+  const config = { ...DEFAULT_CONFIG, lowAt: "20" };
+  let state = { low: false, full: false };
+
+  // 21% 不报，20% 报一次。
+  let r = evaluateAlerts(21, false, false, config, state);
+  assert.equal(r.fire, null);
+  state = r.next;
+  r = evaluateAlerts(20, false, false, config, state);
+  assert.equal(r.fire, "low");
+  state = r.next;
+
+  // 停在 20% 不再重复报。
+  r = evaluateAlerts(19, false, false, config, state);
+  assert.equal(r.fire, null);
+  state = r.next;
+
+  // 回血到 26%（阈值 +5 以上）才算解除，之后 20% 能再报。
+  r = evaluateAlerts(26, false, false, config, state);
+  assert.equal(r.fire, null);
+  state = r.next;
+  r = evaluateAlerts(20, false, false, config, state);
+  assert.equal(r.fire, "low");
+  state = r.next;
+
+  // 插上电源就解除低电量，充到 100% 报一次充满。
+  r = evaluateAlerts(50, true, false, config, state);
+  assert.equal(r.fire, null);
+  assert.equal(r.next.low, false);
+  state = r.next;
+  r = evaluateAlerts(100, true, true, config, state);
+  assert.equal(r.fire, "full");
+  state = r.next;
+  r = evaluateAlerts(100, true, true, config, state);
+  assert.equal(r.fire, null);
+
+  // 关掉开关就不报。
+  const off = { ...config, alertLow: false, alertFull: false };
+  r = evaluateAlerts(10, false, false, off, { low: false, full: false });
+  assert.equal(r.fire, null);
+  r = evaluateAlerts(100, true, true, off, { low: false, full: false });
+  assert.equal(r.fire, null);
+});
+
+test("parseBattery keeps wattage optional and drops bogus values", () => {
+  const withPower = parseBattery('{"ok":true,"percent":50,"watts":5.239,"minutesToFull":48}');
+  assert.equal(withPower.kind, "ok");
+  assert.equal(withPower.reading.watts, 5.2);
+  assert.equal(withPower.reading.minutesToFull, 48);
+
+  const zero = parseBattery('{"ok":true,"percent":50,"watts":0,"minutesToFull":0}');
+  assert.equal(zero.kind, "ok");
+  assert.equal(zero.reading.watts, null);
+  assert.equal(zero.reading.minutesToFull, null);
+
+  const missing = parseBattery('{"ok":true,"percent":50}');
+  assert.equal(missing.kind, "ok");
+  assert.equal(missing.reading.watts, null);
+  assert.equal(missing.reading.minutesToFull, null);
 });

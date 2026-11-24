@@ -20,7 +20,9 @@ const en = {
   labelStatus: "Status",
   labelTimeCharge: "Time to full",
   labelTimeUse: "Time left",
+  labelPower: "Power",
   labelBattery: "Battery",
+  watt: (value: number) => `${value} W`,
 };
 
 const zhCN: typeof en = {
@@ -45,7 +47,9 @@ const zhCN: typeof en = {
   labelStatus: "状态",
   labelTimeCharge: "预计充满",
   labelTimeUse: "剩余可用",
+  labelPower: "功率",
   labelBattery: "电池",
+  watt: (value: number) => `${value} 瓦`,
 };
 
 export const text = navigator.language.toLowerCase().startsWith("zh") ? zhCN : en;

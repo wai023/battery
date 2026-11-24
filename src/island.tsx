@@ -45,8 +45,10 @@ function statusOf(state: BatteryState): string {
 }
 
 function leftOf(state: BatteryState): string {
-  if (!state.ok || state.minutes === null) return "";
-  const span = text.span(state.minutes);
+  // 充满时间优先用「剩余容量 ÷ 充电功率」算出来的那个，比 TimeToFullCharge 靠谱。
+  const minutes = state.charging ? state.minutesToFull ?? state.minutes : state.minutes;
+  if (!state.ok || minutes === null) return "";
+  const span = text.span(minutes);
   return state.charging ? text.toFull(span) : text.remaining(span);
 }
 
@@ -231,6 +233,12 @@ export default function apply(ctx: Context) {
           <span>{statusOf(state)}</span>
           <span>{state.charging ? text.labelTimeCharge : text.labelTimeUse}</span>
           <span>{leftOf(state) || "—"}</span>
+          {state.watts !== null ? (
+            <>
+              <span>{text.labelPower}</span>
+              <span>{text.watt(state.watts)}</span>
+            </>
+          ) : null}
           <span>{text.labelBattery}</span>
           <span>{state.name || "—"}</span>
         </div>

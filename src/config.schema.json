@@ -62,6 +62,43 @@
         "en": "Turning this off freezes the wave and particles to save power"
       },
       "default": true
+    },
+    "alertLow": {
+      "type": "boolean",
+      "title": {
+        "zh-CN": "低电量提醒",
+        "en": "Low battery alert"
+      },
+      "description": {
+        "zh-CN": "用电池跌到阈值时在岛上提醒一次，插电或回血后重置",
+        "en": "Notify once when the level drops to the threshold; resets after charging or recovering"
+      },
+      "default": true
+    },
+    "lowAt": {
+      "type": "string",
+      "title": {
+        "zh-CN": "低电量阈值",
+        "en": "Low battery threshold"
+      },
+      "description": {
+        "zh-CN": "电量跌到这个百分比时提醒",
+        "en": "Notify when the level falls to this percentage"
+      },
+      "enum": ["10", "15", "20", "30"],
+      "default": "20"
+    },
+    "alertFull": {
+      "type": "boolean",
+      "title": {
+        "zh-CN": "充满提醒",
+        "en": "Fully charged alert"
+      },
+      "description": {
+        "zh-CN": "充到 100% 时提醒拔掉电源，长期满电插着会加速电池老化",
+        "en": "Notify at 100% so you can unplug; staying full on AC ages the battery faster"
+      },
+      "default": true
     }
   }
 }

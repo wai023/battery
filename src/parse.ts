@@ -2,7 +2,7 @@ import type { BatteryState } from "./types.ts";
 
 export type BatteryReading = Pick<
   BatteryState,
-  "ok" | "percent" | "charging" | "full" | "ac" | "minutes" | "name"
+  "ok" | "percent" | "charging" | "full" | "ac" | "minutes" | "watts" | "minutesToFull" | "name"
 >;
 
 export type BatteryParse =
@@ -42,6 +42,15 @@ export function parseBattery(raw: string): BatteryParse {
     ? Math.round(o.minutes)
     : null;
 
+  // 功率和估算充满时间都是「有就有、没有就 null」，不做兜底数字，免得显示假的 0W。
+  const watts = typeof o.watts === "number" && Number.isFinite(o.watts) && o.watts > 0
+    ? Math.round(o.watts * 10) / 10
+    : null;
+  const minutesToFull =
+    typeof o.minutesToFull === "number" && Number.isFinite(o.minutesToFull) && o.minutesToFull > 0
+      ? Math.round(o.minutesToFull)
+      : null;
+
   return {
     kind: "ok",
     reading: {
@@ -51,6 +60,8 @@ export function parseBattery(raw: string): BatteryParse {
       full: o.full === true,
       ac: o.ac === true,
       minutes,
+      watts,
+      minutesToFull,
       name: typeof o.name === "string" ? o.name : "",
     },
   };

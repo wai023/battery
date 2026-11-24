@@ -18,6 +18,10 @@ export type BatteryState = {
   ac: boolean;
   // 充电时是「充满还需」，放电时是「还能用」；未知为 null。
   minutes: number | null;
+  // 充电/放电功率（瓦），来自 root\wmi；驱动不填就是 null。
+  watts: number | null;
+  // 按剩余容量与充电功率估的分钟数，比 Win32_Battery 的 TimeToFullCharge 靠谱。
+  minutesToFull: number | null;
   name: string;
   error: string | null;
   updatedAt: number;
@@ -30,6 +34,8 @@ export const INITIAL_STATE: BatteryState = {
   full: false,
   ac: false,
   minutes: null,
+  watts: null,
+  minutesToFull: null,
   name: "",
   error: null,
   updatedAt: 0,
@@ -37,6 +43,8 @@ export const INITIAL_STATE: BatteryState = {
 
 export type FillStyle = "simple" | "wave" | "sparkle";
 export type ChargeColor = "green" | "blue" | "accent" | "custom";
+// 用字符串存阈值，配置表单的 enum 只认字符串，读出来再转数字。
+export type LowThreshold = "10" | "15" | "20" | "30";
 
 export type BatteryConfig = {
   style: FillStyle;
@@ -44,6 +52,9 @@ export type BatteryConfig = {
   customColor: string;
   showRing: boolean;
   animate: boolean;
+  alertLow: boolean;
+  lowAt: LowThreshold;
+  alertFull: boolean;
 };
 
 export const DEFAULT_CONFIG: BatteryConfig = {
@@ -52,6 +63,9 @@ export const DEFAULT_CONFIG: BatteryConfig = {
   customColor: "#3da9ff",
   showRing: false,
   animate: true,
+  alertLow: true,
+  lowAt: "20",
+  alertFull: true,
 };
 
 // 放电时的颜色分段，和截图里的 40% / 20% 一致。
@@ -81,13 +95,45 @@ export function normalizeConfig(raw: unknown): BatteryConfig {
   const input = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   const style = input.style;
   const chargeColor = input.chargeColor;
+  const lowAt = input.lowAt;
   return {
     style: style === "simple" || style === "sparkle" ? style : "wave",
     chargeColor: chargeColor === "green" || chargeColor === "accent" || chargeColor === "custom" ? chargeColor : "blue",
     customColor: typeof input.customColor === "string" ? input.customColor : DEFAULT_CONFIG.customColor,
     showRing: input.showRing === true,
     animate: input.animate !== false,
+    alertLow: input.alertLow !== false,
+    lowAt: lowAt === "10" || lowAt === "15" || lowAt === "30" ? lowAt : "20",
+    alertFull: input.alertFull !== false,
   };
+}
+
+// 提醒只在「跨过阈值」时触发一次，避免每 30 秒弹一条。
+// 回血 5 个百分点或插上电源才算解除，防止在阈值上下来回抖。
+export type AlertState = { low: boolean; full: boolean };
+export type AlertFire = "low" | "full" | null;
+
+export function evaluateAlerts(
+  percent: number,
+  plugged: boolean,
+  full: boolean,
+  config: BatteryConfig,
+  prev: AlertState,
+): { next: AlertState; fire: AlertFire } {
+  const threshold = Number(config.lowAt) || 20;
+  if (plugged) {
+    const next = { low: false, full: prev.full };
+    if (percent < 95) next.full = false;
+    if (full && percent >= 100 && config.alertFull && !prev.full) {
+      return { next: { low: false, full: true }, fire: "full" };
+    }
+    return { next, fire: null };
+  }
+  const next = { low: percent > threshold + 5 ? false : prev.low, full: false };
+  if (percent <= threshold && config.alertLow && !prev.low) {
+    return { next: { ...next, low: true }, fire: "low" };
+  }
+  return { next, fire: null };
 }
 
 // 插电时用固定色（绿/蓝/强调色/自定义），放电时按阈值红黄绿。
