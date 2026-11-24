@@ -53,7 +53,9 @@
 
 ## 安装
 
-双击 `build/wai023-battery-0.1.2.fuyu` 即可；或在浮屿设置里打开「允许运行第三方插件」后再双击。
+到 [Releases](https://github.com/wai023/battery/releases) 下载最新的 `wai023-battery-*.fuyu`，双击安装。浮屿若拦第三方插件，先在设置里打开「允许运行第三方插件」。
+
+自己构建：`npm i && npm run package`，产物落在 `build/` 下。
 
 ## 已知限制
 
