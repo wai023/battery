@@ -1,0 +1,76 @@
+{
+  "name": "@wai023/battery",
+  "version": "0.1.1",
+  "type": "module",
+  "description": "Show battery level and charging state on the island, with liquid wave and sparkle styles",
+  "license": "MIT",
+  "author": "wai023",
+  "repository": "github:wai023/battery",
+  "engines": {
+    "fuyu": ">=0.3.10"
+  },
+  "scripts": {
+    "dev": "fuyu-plugin dev --config build.config.json",
+    "build": "fuyu-plugin build --config build.config.json",
+    "check": "fuyu-plugin check",
+    "package": "fuyu-plugin pack --config build.config.json",
+    "typecheck": "tsc",
+    "lint": "eslint .",
+    "test": "npm run build && node --experimental-strip-types --test test/gauge.test.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.1.8",
+    "eslint": "^10.14.0",
+    "fuyu-plugin": "^2.1.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.72.1"
+  },
+  "fuyu": {
+    "manifest": 1,
+    "displayName": {
+      "zh-CN": "电量",
+      "en": "Battery"
+    },
+    "description": {
+      "zh-CN": "在浮屿上显示电量与充电状态，支持液体波浪与光点动画",
+      "en": "Show battery level and charging state on the island, with liquid wave and sparkle styles"
+    },
+    "icon": "assets/icon.svg",
+    "categories": [
+      "utilities"
+    ],
+    "platforms": [
+      "windows"
+    ],
+    "host": "dist/host.js",
+    "client": {
+      "island": "dist/island.js"
+    },
+    "config": "dist/config.schema.json",
+    "inject": {
+      "required": [
+        "clients",
+        "commands"
+      ],
+      "optional": [
+        "plugin-config/v1"
+      ]
+    },
+    "slots": [
+      "island.page/v1",
+      "island.collapsed/v1",
+      "island.widget/v1"
+    ],
+    "commands": [
+      {
+        "id": "refresh",
+        "title": {
+          "zh-CN": "刷新电量",
+          "en": "Refresh battery level"
+        },
+        "keybinding": "Ctrl+Alt+B"
+      }
+    ]
+  }
+}

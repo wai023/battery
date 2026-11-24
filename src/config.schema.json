@@ -1,0 +1,67 @@
+{
+  "type": "object",
+  "properties": {
+    "style": {
+      "type": "string",
+      "title": {
+        "zh-CN": "填充动画",
+        "en": "Fill animation"
+      },
+      "description": {
+        "zh-CN": "simple=简单填充；wave=液体波浪（默认）；sparkle=光点和粒子",
+        "en": "simple = flat fill; wave = liquid wave (default); sparkle = light dots and particles"
+      },
+      "enum": ["simple", "wave", "sparkle"],
+      "default": "wave"
+    },
+    "chargeColor": {
+      "type": "string",
+      "title": {
+        "zh-CN": "充电时的颜色",
+        "en": "Charging colour"
+      },
+      "description": {
+        "zh-CN": "green=绿色；blue=蓝色（默认）；accent=Windows 强调色；custom=使用下面的自定义颜色。放电时按电量自动变绿、黄、红",
+        "en": "green = green; blue = blue (default); accent = Windows accent; custom = use the colour below. On battery it turns green, amber, red by level"
+      },
+      "enum": ["green", "blue", "accent", "custom"],
+      "default": "blue"
+    },
+    "customColor": {
+      "type": "string",
+      "title": {
+        "zh-CN": "自定义颜色",
+        "en": "Custom colour"
+      },
+      "description": {
+        "zh-CN": "仅在充电颜色选 custom 时生效，格式如 #3da9ff",
+        "en": "Only used when the charging colour is custom, for example #3da9ff"
+      },
+      "default": "#3da9ff"
+    },
+    "showRing": {
+      "type": "boolean",
+      "title": {
+        "zh-CN": "显示电量圆环",
+        "en": "Show level ring"
+      },
+      "description": {
+        "zh-CN": "沿胶囊边缘画一圈进度，颜色与填充一致",
+        "en": "Draw progress along the capsule edge in the same colour as the fill"
+      },
+      "default": false
+    },
+    "animate": {
+      "type": "boolean",
+      "title": {
+        "zh-CN": "开启动画",
+        "en": "Enable animation"
+      },
+      "description": {
+        "zh-CN": "关闭后波浪和光点静止，省电，适合常驻显示",
+        "en": "Turning this off freezes the wave and particles to save power"
+      },
+      "default": true
+    }
+  }
+}

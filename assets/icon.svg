@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Battery">
+  <defs>
+    <clipPath id="shell">
+      <rect x="6" y="19" width="46" height="26" rx="13" />
+    </clipPath>
+  </defs>
+  <rect x="6" y="19" width="46" height="26" rx="13" fill="none" stroke="#9aa8ba" stroke-width="3" />
+  <rect x="55" y="26.5" width="5" height="11" rx="2.5" fill="#9aa8ba" />
+  <g clip-path="url(#shell)">
+    <path d="M 4 32 q 6 -4 12 0 t 12 0 t 12 0 t 12 0 t 12 0 V 47 H 4 Z" fill="#3da9ff" />
+  </g>
+</svg>
