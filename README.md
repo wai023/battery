@@ -58,4 +58,9 @@ npm test
 npm run package
 ```
 
-`docs/preview.png` 与 `build/preview.html` 用同一套几何（`src/gauge.ts`）生成，改了配色或形状记得一起更新。
+`docs/preview.png` 与 `build/preview.html` 用同一套几何（`src/gauge.ts`）生成，改了配色或形状记得一起更新：
+
+```bash
+npm i -D @resvg/resvg-js
+node --experimental-strip-types tools/preview-image.mjs
+```

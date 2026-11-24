@@ -5,7 +5,7 @@
 <g transform="translate(32 78)">
   <rect width="380" height="142" rx="12" fill="#11151c" stroke="#262d38"/>
   <text x="20" y="28" font-size="12" fill="#93a0b4">简单填充 · 68% · 充电蓝</text>
-  <g transform="translate(20 46)"><svg x="0" y="0" width="340" height="68" viewBox="0 0 340 68" overflow="visible">
+  <g transform="translate(20 46)"><svg width="340" height="68" viewBox="0 0 340 68" overflow="visible">
   <defs>
     <clipPath id="capg0"><path d="M 34 1 H 306 A 33 33 0 0 1 339 34 V 34 A 33 33 0 0 1 306 67 H 34 A 33 33 0 0 1 1 34 V 34 A 33 33 0 0 1 34 1 Z"/></clipPath>
     <clipPath id="liqg0"><rect x="0" y="22.12" width="340" height="45.88"/></clipPath>
@@ -20,7 +20,7 @@
 <g transform="translate(428 78)">
   <rect width="380" height="142" rx="12" fill="#11151c" stroke="#262d38"/>
   <text x="20" y="28" font-size="12" fill="#93a0b4">液体波浪 · 68% · 充电蓝</text>
-  <g transform="translate(20 46)"><svg x="0" y="0" width="340" height="68" viewBox="0 0 340 68" overflow="visible">
+  <g transform="translate(20 46)"><svg width="340" height="68" viewBox="0 0 340 68" overflow="visible">
   <defs>
     <clipPath id="capg1"><path d="M 34 1 H 306 A 33 33 0 0 1 339 34 V 34 A 33 33 0 0 1 306 67 H 34 A 33 33 0 0 1 1 34 V 34 A 33 33 0 0 1 34 1 Z"/></clipPath>
     <clipPath id="liqg1"><rect x="0" y="22.12" width="340" height="45.88"/></clipPath>
@@ -35,7 +35,7 @@
 <g transform="translate(824 78)">
   <rect width="380" height="142" rx="12" fill="#11151c" stroke="#262d38"/>
   <text x="20" y="28" font-size="12" fill="#93a0b4">光点和粒子 · 68% · 充电蓝</text>
-  <g transform="translate(20 46)"><svg x="0" y="0" width="340" height="68" viewBox="0 0 340 68" overflow="visible">
+  <g transform="translate(20 46)"><svg width="340" height="68" viewBox="0 0 340 68" overflow="visible">
   <defs>
     <clipPath id="capg2"><path d="M 34 1 H 306 A 33 33 0 0 1 339 34 V 34 A 33 33 0 0 1 306 67 H 34 A 33 33 0 0 1 1 34 V 34 A 33 33 0 0 1 34 1 Z"/></clipPath>
     <clipPath id="liqg2"><rect x="0" y="22.12" width="340" height="45.88"/></clipPath>
@@ -50,7 +50,7 @@
 <g transform="translate(32 236)">
   <rect width="380" height="142" rx="12" fill="#11151c" stroke="#262d38"/>
   <text x="20" y="28" font-size="12" fill="#93a0b4">液体波浪 + 圆环 · 82% · 充电绿</text>
-  <g transform="translate(20 46)"><svg x="0" y="0" width="340" height="68" viewBox="0 0 340 68" overflow="visible">
+  <g transform="translate(20 46)"><svg width="340" height="68" viewBox="0 0 340 68" overflow="visible">
   <defs>
     <clipPath id="capg3"><path d="M 34 3.4 H 305.99999999999994 A 30.6 30.6 0 0 1 336.59999999999997 34 V 34.00000000000001 A 30.6 30.6 0 0 1 305.99999999999994 64.60000000000001 H 34 A 30.6 30.6 0 0 1 3.4 34.00000000000001 V 34 A 30.6 30.6 0 0 1 34 3.4 Z"/></clipPath>
     <clipPath id="liqg3"><rect x="0" y="14.42" width="340" height="53.58"/></clipPath>
@@ -67,7 +67,7 @@
 <g transform="translate(428 236)">
   <rect width="380" height="142" rx="12" fill="#11151c" stroke="#262d38"/>
   <text x="20" y="28" font-size="12" fill="#93a0b4">满电插电 · 100% · 充电蓝（不掉回绿色）</text>
-  <g transform="translate(20 46)"><svg x="0" y="0" width="340" height="68" viewBox="0 0 340 68" overflow="visible">
+  <g transform="translate(20 46)"><svg width="340" height="68" viewBox="0 0 340 68" overflow="visible">
   <defs>
     <clipPath id="capg4"><path d="M 34 3.4 H 305.99999999999994 A 30.6 30.6 0 0 1 336.59999999999997 34 V 34.00000000000001 A 30.6 30.6 0 0 1 305.99999999999994 64.60000000000001 H 34 A 30.6 30.6 0 0 1 3.4 34.00000000000001 V 34 A 30.6 30.6 0 0 1 34 3.4 Z"/></clipPath>
     <clipPath id="liqg4"><rect x="0" y="3.40" width="340" height="64.60"/></clipPath>
@@ -84,7 +84,7 @@
 <g transform="translate(824 236)">
   <rect width="380" height="142" rx="12" fill="#11151c" stroke="#262d38"/>
   <text x="20" y="28" font-size="12" fill="#93a0b4">放电 15% · 光点 + 圆环 · 红色段</text>
-  <g transform="translate(20 46)"><svg x="0" y="0" width="340" height="68" viewBox="0 0 340 68" overflow="visible">
+  <g transform="translate(20 46)"><svg width="340" height="68" viewBox="0 0 340 68" overflow="visible">
   <defs>
     <clipPath id="capg5"><path d="M 34 3.4 H 305.99999999999994 A 30.6 30.6 0 0 1 336.59999999999997 34 V 34.00000000000001 A 30.6 30.6 0 0 1 305.99999999999994 64.60000000000001 H 34 A 30.6 30.6 0 0 1 3.4 34.00000000000001 V 34 A 30.6 30.6 0 0 1 34 3.4 Z"/></clipPath>
     <clipPath id="liqg5"><rect x="0" y="55.42" width="340" height="12.58"/></clipPath>
