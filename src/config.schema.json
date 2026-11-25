@@ -99,6 +99,18 @@
         "en": "Notify at 100% so you can unplug; staying full on AC ages the battery faster"
       },
       "default": true
+    },
+    "hud": {
+      "type": "boolean",
+      "title": {
+        "zh-CN": "临时浮窗",
+        "en": "Temporary HUD"
+      },
+      "description": {
+        "zh-CN": "插拔电源、跌到低电量、充满时，在岛下方弹一个 1.5 秒后自动淡出的浮窗，不挡岛上操作",
+        "en": "Pop a HUD under the island when power is plugged or pulled, the level gets low, or the battery fills; it fades after 1.5s"
+      },
+      "default": true
     }
   }
 }

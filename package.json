@@ -1,6 +1,6 @@
 {
   "name": "@wai023/battery",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "type": "module",
   "description": "Show battery level and charging state on the island, with liquid wave and sparkle styles",
   "license": "MIT",
@@ -59,7 +59,8 @@
     "slots": [
       "island.page/v1",
       "island.collapsed/v1",
-      "island.widget/v1"
+      "island.widget/v1",
+      "island.overlay/v1"
     ],
     "commands": [
       {
@@ -69,6 +70,13 @@
           "en": "Refresh battery level"
         },
         "keybinding": "Ctrl+Alt+B"
+      },
+      {
+        "id": "hud-test",
+        "title": {
+          "zh-CN": "测试电量浮窗",
+          "en": "Test battery HUD"
+        }
       }
     ]
   }

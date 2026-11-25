@@ -1,6 +1,7 @@
 import type { Context } from "fuyu-plugin";
 import { useEffect, useId, useState, type CSSProperties } from "react";
 import { bubbles, capsulePath, fillXOf, levelOf, sparkles, starPath, wavePath, wavePathH } from "./gauge.ts";
+import { createHudView } from "./hud.tsx";
 import { text } from "./text.ts";
 import {
   DEFAULT_CONFIG,
@@ -373,6 +374,16 @@ export default function apply(ctx: Context) {
     opens: "battery",
     component: BarItem,
   });
+
+  // 岛下方的临时浮层：宿主发 battery.hud 时播入场 / 停留 / 淡出。
+  try {
+    ctx.slots.add("island.overlay/v1", {
+      id: "battery-hud",
+      component: createHudView(ctx),
+    });
+  } catch {
+    // 旧版浮屿没有这个插槽时，页面和收起条仍可用。
+  }
 
   // 与录音插件同一套注册方式：island.widget/v1 必须直接在 ctx.slots 上调用，
   // 取出 add 当函数用会丢 this（Cannot read properties of undefined）。

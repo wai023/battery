@@ -8,6 +8,8 @@ import { messagesV1 } from "fuyu-plugin/services";
 import { parseBattery, type BatteryParse } from "./parse.ts";
 import {
   DEFAULT_CONFIG,
+  HUD_GAP_MS,
+  HUD_MAX_MS,
   INITIAL_STATE,
   METHODS,
   TOPICS,
@@ -17,6 +19,8 @@ import {
   type AlertState,
   type BatteryConfig,
   type BatteryState,
+  type HudKind,
+  type HudPayload,
 } from "./types.ts";
 
 export const name = "battery";
@@ -130,6 +134,60 @@ export function apply(ctx: Context) {
     }
   }
 
+  // ---- 临时浮窗 ----
+  // 内容挂在岛的 island.overlay/v1 插槽上：宿主只发数据和管时序，不用实验窗口接口，
+  // 当前客户端就能显示；位置由宿主的浮层布局决定，始终在岛下方。
+  let hudSeq = 0;
+  let hudShowing = false;
+  let hudPending = false;
+  let hudTimer: (() => void) | null = null;
+  let lastHud: HudPayload | null = null;
+  let lastHudStamp = 0;
+  const lastHudAt: Partial<Record<HudKind, number>> = {};
+
+  function hideHud() {
+    if (hudTimer) {
+      hudTimer();
+      hudTimer = null;
+    }
+    hudShowing = false;
+    lastHud = null;
+  }
+
+  function showHud(kind: HudKind, reading: BatteryState, force = false) {
+    if (!force) {
+      if (!config.hud || hudShowing || hudPending) return;
+      const now = Date.now();
+      if (now - (lastHudAt[kind] ?? 0) < HUD_GAP_MS) return;
+      lastHudAt[kind] = now;
+      hudPending = true;
+    }
+
+    try {
+      hudSeq += 1;
+      const payload: HudPayload = {
+        seq: hudSeq,
+        kind,
+        percent: reading.percent,
+        minutes: kind === "plug" ? reading.minutesToFull ?? reading.minutes : reading.minutes,
+        charging: reading.charging,
+      };
+      ctx.clients.publish(TOPICS.hud, payload);
+      hudShowing = true;
+      lastHud = payload;
+      lastHudStamp = Date.now();
+      // 播完由浮层侧回报 hudDone；这里另有 3.5 秒兜底，漏了也会撤掉。
+      hudTimer = ctx.setTimeout(() => { hideHud(); }, HUD_MAX_MS);
+    } finally {
+      hudPending = false;
+    }
+  }
+
+  function triggerHud(kind: HudKind, reading: BatteryState) {
+    const snapshot = { ...reading };
+    ctx.setTimeout(() => { showHud(kind, snapshot); }, 0);
+  }
+
   // ---- 常驻 PowerShell 子进程：一次启动，之后每 30 秒发一行取一次数 ----
   let child: ChildProcessWithoutNullStreams | null = null;
   let buffer = "";
@@ -225,8 +283,8 @@ export function apply(ctx: Context) {
   }
 
   // 一次请求：写一行、等一行；超时就把进程杀掉，下次重新拉起。
-  // PING 读完整数据（WMI），POLL 只读内核电源位，几十微秒。
-  function request(kind: "PING" | "POLL" = "PING"): Promise<string> {
+  // PING 读完整数据（WMI），POLL 只读内核电源位，SCREEN 只读鼠标所在屏，都是几十微秒到几十毫秒。
+  function request(kind: "PING" | "POLL" | "SCREEN" = "PING"): Promise<string> {
     return new Promise((resolve) => {
       if (!ensureChild() || !child) {
         resolve("");
@@ -259,13 +317,17 @@ export function apply(ctx: Context) {
       const result = evaluateAlerts(state.percent, isPlugged(state), state.full, config, alerts);
       alerts = result.next;
       if (result.fire === "low") {
-        notify("电量偏低", `还剩 ${state.percent}%，接上电源吧`);
+        if (config.hud) triggerHud("low", state);
+        else notify("电量偏低", `还剩 ${state.percent}%，接上电源吧`);
       } else if (result.fire === "full") {
-        notify("电池已充满", "可以拔掉电源，长期满电插着会加速老化");
+        if (config.hud) triggerHud("full", state);
+        else notify("电池已充满", "可以拔掉电源，长期满电插着会加速老化");
       }
 
       // 插拔之后 WMI 的功率和剩余时间要过一两秒才更新，再补一次完整读。
+      // before.ok 为 false 时是启动后的第一次读数，只当基线，不当成一次插拔。
       if (before.ok && before.ac !== state.ac) {
+        triggerHud(state.ac ? "plug" : "unplug", state);
         ctx.setTimeout(() => { void poll(); }, 1_500);
       }
     } else {
@@ -321,10 +383,41 @@ export function apply(ctx: Context) {
     return state;
   });
   ctx.clients.handle(METHODS.getConfig, () => syncConfig());
+  ctx.clients.handle(METHODS.getHud, () =>
+    hudShowing && lastHud && Date.now() - lastHudStamp < HUD_MAX_MS ? lastHud : null,
+  );
   ctx.clients.handle(METHODS.refresh, () => poll());
+  // 窗口播完淡出就收窗，比固定等 3.5 秒跟手。
+  ctx.clients.handle(METHODS.hudDone, () => { hideHud(); });
 
   ctx.commands.register("refresh", () => poll(), {
     title: { "zh-CN": "刷新电量", en: "Refresh battery level" },
+  });
+
+  // 依次弹四种浮窗，用来核对位置、配色和时序，不必真的插拔电源。
+  let hudTest = 0;
+  function runHudTest() {
+    const kinds: HudKind[] = ["plug", "unplug", "low", "full"];
+    const kind = kinds[hudTest % kinds.length];
+    hudTest = (hudTest + 1) % kinds.length;
+    const sample: BatteryState = {
+      ...state,
+      ok: true,
+      percent: kind === "low" ? 20 : kind === "full" ? 100 : kind === "unplug" ? 56 : 68,
+      charging: kind === "plug",
+      ac: kind === "plug" || kind === "full",
+      full: kind === "full",
+      minutes: kind === "plug" ? 80 : 132,
+      minutesToFull: kind === "plug" ? 80 : null,
+      updatedAt: Date.now(),
+    };
+    void (async () => {
+      await hideHud();
+      await showHud(kind, sample, true);
+    })();
+  }
+  ctx.commands.register("hud-test", runHudTest, {
+    title: { "zh-CN": "测试电量浮窗", en: "Test battery HUD" },
   });
 
   // 设置面板保存后立刻推给岛上；onChange 不可用时靠 10 秒的文件兜底。

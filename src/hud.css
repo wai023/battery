@@ -1,0 +1,145 @@
+/* 浮层挂在岛窗口的 stage 里（宿主用 display:contents 包了一层），本身不带定位。
+   照抄宿主消息横幅的锚点：absolute 钉在岛下方，水平居中；不写定位就会被 flex 排到岛侧面。
+   水平居中用 left 偏移而不是 translateX，给入场动画的 transform 留位置。 */
+.hud {
+  position: absolute;
+  top: calc(38px * var(--island-scale, 1) + 8px);
+  left: calc(50% - 159px);
+  z-index: 40;
+  box-sizing: border-box;
+  width: 318px;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 16px 11px 12px;
+  border-radius: 18px;
+  background: rgba(22, 28, 38, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  color: var(--fuyu-plugin-text, #eaf2fb);
+  font-family: var(--fuyu-plugin-font, system-ui, -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  opacity: 0;
+  transform: translateY(-16px) scale(0.93);
+  transform-origin: 50% 0;
+  will-change: opacity, transform;
+}
+
+/* 岛贴在屏幕底边时，浮层翻到岛上方。 */
+:root[data-island-edge="bottom"] .hud {
+  top: auto;
+  bottom: calc(38px * var(--island-scale, 1) + 8px);
+  transform-origin: 50% 100%;
+}
+
+/* 一条动画走完入场 0.34s、停留 1.56s、淡出 0.46s；结束回调通知宿主收起浮层。
+   界面侧没有计时器可用，所以时长都放在这里。 */
+.hud--in {
+  animation: hud-life 2.36s cubic-bezier(0.2, 0.9, 0.25, 1.05) both;
+}
+
+@keyframes hud-life {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.93);
+  }
+  14% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-9px) scale(0.97);
+  }
+}
+
+.hud__badge {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: var(--hud-accent, #3da9ff);
+  background: color-mix(in srgb, var(--hud-accent, #3da9ff) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--hud-accent, #3da9ff) 38%, transparent);
+}
+
+.hud__badge svg {
+  display: block;
+}
+
+/* 充电时闪电轻微呼吸：静态图里也能看出「在进电」。 */
+.hud[data-kind="plug"] .hud__badge svg {
+  animation: hud-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes hud-pulse {
+  0%,
+  100% {
+    opacity: 0.65;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+.hud__copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hud__title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.hud__sub {
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--fuyu-plugin-text-secondary, #93a0b4);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.hud__pct {
+  margin-left: auto;
+  flex: none;
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.5px;
+  line-height: 1;
+  color: var(--hud-accent, #3da9ff);
+  font-variant-numeric: tabular-nums;
+}
+
+.hud__pct small {
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: 1px;
+  opacity: 0.85;
+}
+
+/* 系统关了动效时保留终态，只把过程压到一帧，不能直接 animation:none（会退回 opacity:0）。 */
+@media (prefers-reduced-motion: reduce) {
+  .hud--in {
+    animation-duration: 0.01s;
+  }
+
+  .hud[data-kind="plug"] .hud__badge svg {
+    animation: none;
+  }
+}

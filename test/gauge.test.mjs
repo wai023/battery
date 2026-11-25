@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { bubbles, capsulePath, capsulePerimeter, fillXOf, levelOf, sparkles, starPath, wavePath, wavePathH } from "../src/gauge.ts";
-import { parseBattery } from "../src/parse.ts";
+import { hudPosition, parseBattery, parseScreen } from "../src/parse.ts";
 import { DEFAULT_CONFIG, TONES, evaluateAlerts, isPlugged, normalizeConfig, toneOf } from "../src/types.ts";
 
 test("capsulePath keeps the stroke inside the box", () => {
@@ -119,6 +119,22 @@ test("parseBattery separates no-battery from unreadable output", () => {
   assert.deepEqual(parseBattery('{"ok":true,'), { kind: "bad" });
 });
 
+test("parseScreen rejects empty or off-screen readings", () => {
+  assert.equal(parseScreen(""), null);
+  assert.equal(parseScreen('{"ok":false,"reason":"no-forms"}'), null);
+  assert.deepEqual(
+    parseScreen('noise {"ok":true,"x":1920,"y":0,"width":1280,"height":1040}'),
+    { x: 1920, y: 0, width: 1280, height: 1040 },
+  );
+});
+
+test("hudPosition centers on the active monitor and stays inside it", () => {
+  assert.deepEqual(hudPosition({ x: 0, y: 0, width: 1920, height: 1040 }), { x: 770, y: 48 });
+  assert.deepEqual(hudPosition({ x: 1920, y: 100, width: 1280, height: 900 }), { x: 2370, y: 148 });
+  // 窗口比屏幕还窄时贴左，不跑进相邻屏幕。
+  assert.deepEqual(hudPosition({ x: -1200, y: 0, width: 300, height: 600 }), { x: -1200, y: 48 });
+});
+
 test("toneOf uses fixed charging colours and level thresholds on battery", () => {
   assert.equal(toneOf(30, true, "green", "#000000"), TONES.green);
   assert.equal(toneOf(30, true, "blue", "#000000"), TONES.blue);
@@ -153,6 +169,7 @@ test("normalizeConfig fills defaults and rejects bad values", () => {
     alertLow: true,
     lowAt: "20",
     alertFull: true,
+    hud: true,
   });
   assert.deepEqual(normalizeConfig({ style: "nope", chargeColor: "nope", animate: false }), {
     style: "wave",
@@ -163,11 +180,13 @@ test("normalizeConfig fills defaults and rejects bad values", () => {
     alertLow: true,
     lowAt: "20",
     alertFull: true,
+    hud: true,
   });
   // 阈值只认四档，别的一律退回 20；提醒开关显式 false 才关。
   assert.equal(normalizeConfig({ lowAt: "25" }).lowAt, "20");
   assert.equal(normalizeConfig({ lowAt: "30" }).lowAt, "30");
   assert.equal(normalizeConfig({ alertLow: false }).alertLow, false);
+  assert.equal(normalizeConfig({ hud: false }).hud, false);
 });
 
 test("evaluateAlerts fires once per crossing and resets with hysteresis", () => {

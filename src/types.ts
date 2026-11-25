@@ -1,13 +1,42 @@
 export const TOPICS = {
   state: "battery.state",
   config: "battery.config",
+  hud: "battery.hud",
 } as const;
 
 export const METHODS = {
   getState: "battery.getState",
   getConfig: "battery.getConfig",
+  getHud: "battery.getHud",
   refresh: "battery.refresh",
+  // 浮窗播完动画后回报，宿主据此立刻隐藏窗口。
+  hudDone: "battery.hudDone",
 } as const;
+
+// —— 临时浮窗 ——
+// 窗口名同时是 package.json 里 fuyu.client 的键、插槽的 windowId。
+export const HUD_WINDOW = "hud";
+export const HUD_SIZE = { width: 380, height: 130 } as const;
+// 内容距窗口顶留 30px：入场从 -16px 落下来、外加阴影，都要空间。
+export const HUD_PAD_TOP = 30;
+// 岛在屏幕顶部 14px、高 34px；浮窗内容顶边落在岛底边下方 30px。
+export const ISLAND_BOTTOM = 48;
+export const HUD_CONTENT_TOP = ISLAND_BOTTOM + 30;
+// 窗口出现到隐藏的上限；窗口正常会提前回报 hudDone。
+export const HUD_MAX_MS = 3_500;
+// 同类事件 1 分钟内只弹一次，和原型里定的规则一致。
+export const HUD_GAP_MS = 60_000;
+
+export type HudKind = "plug" | "unplug" | "low" | "full";
+
+export type HudPayload = {
+  seq: number;
+  kind: HudKind;
+  percent: number;
+  // 充电时是「充满还需」，放电时是「还能用」；未知为 null。
+  minutes: number | null;
+  charging: boolean;
+};
 
 export type BatteryState = {
   // false 表示这次没读到电池（台式机、WMI 失败），此时 percent 保留上一次读数。
@@ -55,6 +84,7 @@ export type BatteryConfig = {
   alertLow: boolean;
   lowAt: LowThreshold;
   alertFull: boolean;
+  hud: boolean;
 };
 
 export const DEFAULT_CONFIG: BatteryConfig = {
@@ -66,6 +96,7 @@ export const DEFAULT_CONFIG: BatteryConfig = {
   alertLow: true,
   lowAt: "20",
   alertFull: true,
+  hud: true,
 };
 
 // 放电时的颜色分段，和截图里的 40% / 20% 一致。
@@ -105,6 +136,7 @@ export function normalizeConfig(raw: unknown): BatteryConfig {
     alertLow: input.alertLow !== false,
     lowAt: lowAt === "10" || lowAt === "15" || lowAt === "30" ? lowAt : "20",
     alertFull: input.alertFull !== false,
+    hud: input.hud !== false,
   };
 }
 

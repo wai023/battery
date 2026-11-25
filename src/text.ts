@@ -24,6 +24,18 @@ const en = {
   labelPower: "Power",
   labelBattery: "Battery",
   watt: (value: number) => `${value} W`,
+  // 临时浮窗（独立窗口）的四组文案。
+  hudPlug: "Power connected",
+  hudPlugBody: (span: string) => `Charging · ${span} until full`,
+  hudPlugIdle: "On AC, not charging right now",
+  hudUnplug: "Power disconnected",
+  hudUnplugBody: (span: string) => `${span} left`,
+  hudUnplugIdle: "Running on battery",
+  hudLow: "Battery low",
+  hudLowBody: (span: string) => `About ${span} left · plug in soon`,
+  hudLowIdle: "Plug in when you can",
+  hudFull: "Fully charged",
+  hudFullBody: "You can unplug now",
 };
 
 const zhCN: typeof en = {
@@ -52,6 +64,18 @@ const zhCN: typeof en = {
   labelPower: "功率",
   labelBattery: "电池",
   watt: (value: number) => `${value} 瓦`,
+  // 临时浮窗（独立窗口）的四组文案。
+  hudPlug: "已接入电源",
+  hudPlugBody: (span: string) => `充电中 · 预计 ${span} 后充满`,
+  hudPlugIdle: "已接电源，暂未进电",
+  hudUnplug: "已断开电源",
+  hudUnplugBody: (span: string) => `剩余可用 ${span}`,
+  hudUnplugIdle: "正在使用电池",
+  hudLow: "电量偏低",
+  hudLowBody: (span: string) => `剩余可用约 ${span} · 建议充电`,
+  hudLowIdle: "建议尽快接上电源",
+  hudFull: "已充满",
+  hudFullBody: "可以拔下电源了",
 };
 
 export const text = navigator.language.toLowerCase().startsWith("zh") ? zhCN : en;
